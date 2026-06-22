@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Radar - Google Cloud Changelog Dashboard</title>
+    <meta name="description" content="A premium, real-time dashboard tracking Google Cloud BigQuery release notes and updates. Stay up to date with new features, announcements, deprecations, and fixes.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Icons (SVG used inline, but adding FontAwesome via CDN for standard social icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="glow-bg"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar / Header Section -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="url(#logo-grad-1)"/>
+                        <path d="M2 17L12 22L22 17" stroke="url(#logo-grad-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="url(#logo-grad-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="logo-grad-1" x1="2" y1="7" x2="22" y2="7" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#3b82f6"/>
+                                <stop offset="1" stop-color="#60a5fa"/>
+                            </linearGradient>
+                            <linearGradient id="logo-grad-2" x1="2" y1="19.5" x2="22" y2="19.5" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#3b82f6"/>
+                                <stop offset="1" stop-color="#10b981"/>
+                            </linearGradient>
+                            <linearGradient id="logo-grad-3" x1="2" y1="14.5" x2="22" y2="14.5" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#60a5fa"/>
+                                <stop offset="1" stop-color="#a78bfa"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>BigQuery</h1>
+                    <span>Release Radar</span>
+                </div>
+            </div>
+            
+            <p class="subtitle">Track and share official updates from the Google Cloud BigQuery feed in real time.</p>
+            
+            <div class="control-panel">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search updates...">
+                    <button id="clear-search" class="clear-btn" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="refresh-btn" class="btn btn-primary" title="Refresh Feed">
+                        <i class="fa-solid fa-rotate refresh-spinner" id="spinner-icon"></i>
+                        <span>Refresh Notes</span>
+                    </button>
+                </div>
+                
+                <div class="sync-status" id="sync-status">
+                    Last updated: Checking...
+                </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="filter-section">
+                <h3>Filter by Category</h3>
+                <div class="filter-group">
+                    <button class="filter-chip active" data-category="all">
+                        <span>All Updates</span>
+                        <span class="count-badge" id="count-all">-</span>
+                    </button>
+                    <button class="filter-chip" data-category="feature">
+                        <span class="dot dot-feature"></span>
+                        <span>Features</span>
+                        <span class="count-badge" id="count-feature">-</span>
+                    </button>
+                    <button class="filter-chip" data-category="announcement">
+                        <span class="dot dot-announcement"></span>
+                        <span>Announcements</span>
+                        <span class="count-badge" id="count-announcement">-</span>
+                    </button>
+                    <button class="filter-chip" data-category="issue">
+                        <span class="dot dot-issue"></span>
+                        <span>Issues</span>
+                        <span class="count-badge" id="count-issue">-</span>
+                    </button>
+                    <button class="filter-chip" data-category="deprecation">
+                        <span class="dot dot-deprecation"></span>
+                        <span>Deprecations</span>
+                        <span class="count-badge" id="count-deprecation">-</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Timeline / Feed View -->
+        <main class="feed-view">
+            <!-- Alert banner for errors/warnings -->
+            <div id="alert-banner" class="alert-banner" style="display:none;">
+                <span class="alert-text"></span>
+                <button class="alert-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="timeline-container">
+                <div class="timeline-line"></div>
+                <div id="timeline-events" class="timeline-events">
+                    <!-- Skeleton Loader initially -->
+                    <div class="timeline-skeleton">
+                        <div class="skeleton-group">
+                            <div class="skeleton-date"></div>
+                            <div class="skeleton-card"></div>
+                            <div class="skeleton-card"></div>
+                        </div>
+                        <div class="skeleton-group">
+                            <div class="skeleton-date"></div>
+                            <div class="skeleton-card"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Twitter Panel / Drawer -->
+    <div id="tweet-drawer" class="tweet-drawer">
+        <div class="tweet-drawer-header">
+            <div class="title-with-icon">
+                <i class="fa-brands fa-x-twitter"></i>
+                <h2>Draft Tweet</h2>
+            </div>
+            <button id="close-drawer-btn" class="close-drawer-btn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="tweet-drawer-body">
+            <p class="drawer-instruction">You have selected a release note item. You can edit the post below before sharing it to X/Twitter.</p>
+            
+            <div class="tweet-preview-box">
+                <div class="tweet-preview-header">
+                    <div class="avatar-placeholder">BQ</div>
+                    <div class="user-meta">
+                        <span class="display-name">Cloud Architect</span>
+                        <span class="handle">@bq_radar</span>
+                    </div>
+                </div>
+                
+                <textarea id="tweet-textarea" rows="6" maxlength="280" placeholder="What's happening?"></textarea>
+                
+                <div class="tweet-preview-footer">
+                    <div class="char-count-container">
+                        <svg class="progress-ring" width="24" height="24">
+                            <circle class="progress-ring__circle-bg" stroke="#1e293b" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" />
+                            <circle class="progress-ring__circle" stroke="#3b82f6" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" />
+                        </svg>
+                        <span id="char-counter" class="char-counter">280</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hashtag-presets">
+                <span>Quick Hashtags:</span>
+                <div class="hashtag-chips">
+                    <button class="hashtag-chip active" data-hashtag="#BigQuery">#BigQuery</button>
+                    <button class="hashtag-chip active" data-hashtag="#GoogleCloud">#GoogleCloud</button>
+                    <button class="hashtag-chip" data-hashtag="#DataEngineering">#DataEngineering</button>
+                    <button class="hashtag-chip" data-hashtag="#GCP">#GCP</button>
+                    <button class="hashtag-chip" data-hashtag="#Serverless">#Serverless</button>
+                </div>
+            </div>
+            
+            <button id="tweet-submit-btn" class="btn btn-tweet">
+                <i class="fa-brands fa-x-twitter"></i>
+                <span>Post to X / Twitter</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Backdrop for Drawer on small screens -->
+    <div id="drawer-backdrop" class="drawer-backdrop"></div>
+
+    <!-- Custom Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Inline Script for App Setup -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
